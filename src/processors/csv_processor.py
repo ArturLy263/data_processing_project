@@ -4,7 +4,7 @@ from src.validators.file_validator import FileValidator
 
 def read_csv_and_divide(filename: str):
     try:
-        with FileValidator(filename=filename, mode='r') as file:
+        with FileValidator(filename=filename, mode="r") as file:
             reader = csv.reader(file)
             next(reader)
             for row in reader:

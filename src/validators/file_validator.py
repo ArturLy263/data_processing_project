@@ -11,7 +11,7 @@ class FileValidator:
     def __enter__(self):
         if self.mode not in ["w", "a"] and not os.path.exists(self.filename):
             raise FileNotFoundError(f"Файл не найден: {self.filename}")
-        self.file = open(self.filename, self.mode, newline='')
+        self.file = open(self.filename, self.mode, newline="")
         return self.file
 
     def __exit__(self, exc_type, exc_val, exc_tb):
