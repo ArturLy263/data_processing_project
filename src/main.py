@@ -1,16 +1,30 @@
-# This is a sample Python script.
-
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+from src.models.data_generator import generate_transactions, generate_inventory
+from src.processors.analyzer import (
+    merge_transactions_inventory,
+    add_stockout_risk,
+    add_rolling_revenue,
+    get_top_performers,
+)
 
 
-# Press the green button in the gutter to run the script.
+def main():
+    print("Generating data...")
+    df_tx = generate_transactions()
+    df_inv = generate_inventory(df_tx)
+
+    df_tx.to_csv('data/raw/transactions.csv', index=False)
+    df_inv.to_json('data/raw/inventory.json', orient='records', indent=4)
+    print(f"Generated {len(df_tx)} transactions, {len(df_inv)} inventory snapshots")
+
+    df = merge_transactions_inventory(df_tx, df_inv)
+    df = add_stockout_risk(df)
+    df = add_rolling_revenue(df)
+
+    df.to_csv('data/processed/analysis_output.csv', index=False)
+    top = get_top_performers(df)
+    top.to_csv('data/processed/top_performers.csv', index=False)
+    print("Done. Results saved to data/processed/")
+
+
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    main()
