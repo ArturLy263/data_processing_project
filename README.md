@@ -1,21 +1,46 @@
 # Data Processing Project
 
-## Description
-This project demonstrates data processing and cleaning using Python.
-
-## Tech Stack
-- Python
-- Pandas
+Python project for data validation, processing and analysis using pandas.
 
 ## Features
-- Data cleaning
-- Data transformation
-- Basic data analysis
+
+- Generate synthetic transaction data
+- Validate CSV files
+- Process and transform datasets
+- Analyze revenue metrics
+- Save processed results
+- Automated testing with pytest
 
 ## Project Structure
-- main.py
-- Database.py
-- FileValidator.py
+
+bash src/ ├── models/ ├── processors/ ├── utils/ ├── validators/  tests/ data/ 
+
+## Installation
+
+Create virtual environment:
+
+bash python3 -m venv .venv source .venv/bin/activate 
+
+Install dependencies:
+
+bash pip install -r requirements.txt 
+
+## Run Project
+
+bash python3 -m src.main 
+
+## Run Tests
+
+bash python3 -m pytest tests/ -v 
+
+## Technologies
+
+- Python
+- Pandas
+- NumPy
+- Pytest
+- Black
 
 ## Goal
-The goal of this project is to practice working with data, building simple workflows, and improving Python and data skills.
+
+Practice modular Python project structure, testing, and ETL-style data processing workflows.
