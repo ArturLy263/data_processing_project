@@ -28,11 +28,14 @@ def add_stockout_risk(df: pd.DataFrame, threshold: float = 0.05) -> pd.DataFrame
     return df
 
 
-def add_rolling_revenue(df: pd.DataFrame, window: int = 30) -> pd.DataFrame:
-    df = df.copy()
-    df["30d_avg_revenue"] = df.groupby(["region", "item_sku"])[
-        "gross_revenue"
-    ].transform(lambda x: x.rolling(window, min_periods=1).mean())
+def add_rolling_revenue(df: pd.DataFrame, window: str = "30D") -> pd.DataFrame:
+    """Average revenue per region and SKU over a trailing time window (default 30 days)."""
+    df = df.sort_values("transaction_date").copy()
+    rolling_parts = [
+        group.rolling(window, on="transaction_date", min_periods=1)["gross_revenue"].mean()
+        for _, group in df.groupby(["region", "item_sku"], sort=False)
+    ]
+    df["rolling_30d_avg_revenue"] = pd.concat(rolling_parts)
     return df
 
 
@@ -41,10 +44,9 @@ def get_top_performers(df: pd.DataFrame, quantile: float = 0.9) -> pd.DataFrame:
         "gross_revenue"
     ].sum()
 
-    def top_percent(group):
-        threshold = group["gross_revenue"].quantile(quantile)
-        return group[group["gross_revenue"] >= threshold]
-
-    return revenue_by_item.groupby("region", group_keys=False).apply(
-        top_percent, include_groups=False
+    thresholds = revenue_by_item.groupby("region")["gross_revenue"].transform(
+        lambda s: s.quantile(quantile)
+    )
+    return revenue_by_item[revenue_by_item["gross_revenue"] >= thresholds].reset_index(
+        drop=True
     )

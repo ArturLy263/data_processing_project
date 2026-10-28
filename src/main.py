@@ -1,3 +1,8 @@
+import random
+from pathlib import Path
+
+import numpy as np
+
 from src.models.data_generator import generate_transactions, generate_inventory
 from src.processors.analyzer import (
     merge_transactions_inventory,
@@ -7,7 +12,17 @@ from src.processors.analyzer import (
 )
 
 
+SEED = 42
+RAW_DIR = Path("data/raw")
+PROCESSED_DIR = Path("data/processed")
+
+
 def main():
+    random.seed(SEED)
+    np.random.seed(SEED)
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+
     print("Generating data...")
     df_tx = generate_transactions()
     df_inv = generate_inventory(df_tx)
