@@ -12,11 +12,11 @@ def kelvin_to_celsius_many(values):
 
 def km_to_miles(value: float) -> float:
     if value < 0:
-        raise ValueError(f"Расстояние не может быть отрицательным: {value}")
+        raise ValueError(f"Distance cannot be negative: {value}")
     return value * KM_TO_MI_FACTOR
 
 
 def miles_to_km(value: float) -> float:
     if value < 0:
-        raise ValueError(f"Расстояние не может быть отрицательным: {value}")
+        raise ValueError(f"Distance cannot be negative: {value}")
     return value / KM_TO_MI_FACTOR
