@@ -10,6 +10,7 @@ from src.processors.analyzer import (
     add_rolling_revenue,
     get_top_performers,
 )
+from src.validators.data_validator import validate_inventory, validate_transactions
 
 
 SEED = 42
@@ -30,6 +31,9 @@ def main():
     df_tx.to_csv("data/raw/transactions.csv", index=False)
     df_inv.to_json("data/raw/inventory.json", orient="records", indent=4)
     print(f"Generated {len(df_tx)} transactions, {len(df_inv)} inventory snapshots")
+
+    validate_transactions(df_tx)
+    validate_inventory(df_inv)
 
     df = merge_transactions_inventory(df_tx, df_inv)
     df = add_stockout_risk(df)
