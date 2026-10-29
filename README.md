@@ -5,7 +5,7 @@
 A small pandas pipeline on **synthetic** retail data. It generates sales transactions and inventory
 snapshots, joins each sale to the latest earlier stock snapshot of the same SKU (`merge_asof`),
 flags stock-out risk, computes a 30-day rolling average of revenue per region and SKU, and selects
-the top 10 % of SKUs by revenue in each region.
+the top 10 % of SKUs by revenue in each region. Optionally, it loads the results into PostgreSQL.
 
 Before processing, the input is validated: required columns present, no nulls, unique
 `transaction_id`, positive `unit_price` and `units_sold`, non-negative `current_stock`. Invalid data
@@ -30,6 +30,33 @@ Tested with Python 3.12 and 3.14.
 To check a run: `data/processed/analysis_output.csv` has 5,000 rows plus a header and
 `data/processed/top_performers.csv` 30 rows plus a header; the first rows of `top_performers.csv`
 are shown below. Running the pipeline again produces identical files.
+
+## Load the results into PostgreSQL (optional)
+
+```bash
+docker compose up -d --wait postgres          # PostgreSQL 16 on localhost:5435
+cp .env.example .env
+set -a; . ./.env; set +a                       # export DATABASE_URL and TEST_DATABASE_URL
+
+python -m src.main --load-postgres
+python -m pytest tests -q                      # now also runs the database tests
+```
+
+`src/load/postgres_loader.py` creates two tables if they do not exist, `sales_analysis` (one row
+per transaction, primary key `transaction_id`, CHECK constraints on price, quantity and stock) and
+`top_performers` (primary key `region, item_sku`), and replaces their contents with `TRUNCATE` and
+`COPY` in **one transaction**: a failed load leaves the previous results untouched, and running it
+again gives the same rows. `revenue_by_region()` is an example SQL query over the loaded data:
+
+```sql
+SELECT region, COUNT(*) AS transactions, SUM(gross_revenue) AS gross_revenue,
+       COUNT(*) FILTER (WHERE stockout_risk) AS stockout_risks
+FROM sales_analysis GROUP BY region ORDER BY region;
+```
+
+Without `--load-postgres` the pipeline needs no database. The database tests are skipped when
+`TEST_DATABASE_URL` is not set; with `REQUIRE_TEST_DATABASE=1` (as in CI) a missing database fails
+the run instead. Each test works in its own temporary schema and drops it afterwards.
 
 ## Pipeline
 
@@ -75,6 +102,7 @@ src/
 ├── main.py                     # runs the pipeline
 ├── models/data_generator.py    # synthetic transactions and inventory
 ├── processors/analyzer.py      # join, flags, rolling revenue, top performers
+├── load/postgres_loader.py     # optional load into PostgreSQL
 └── validators/data_validator.py # input checks
 tests/
 ```
@@ -86,5 +114,10 @@ tests/
   stock empty when there is none), the 5 % stock-out threshold, and a full run of `main()` in a
   temporary directory that writes all files and produces identical output twice
 - `test_data_validator.py`: each validation rule
+- `test_postgres_loader.py`: tables and types after a load (including a sale with no stock
+  snapshot), a repeated load, a failed load that keeps the previous rows, and the example query —
+  against a real PostgreSQL
 
-GitHub Actions runs the tests and then the pipeline itself on a fresh checkout.
+GitHub Actions starts a PostgreSQL 16 service, runs all tests with `REQUIRE_TEST_DATABASE=1`, then
+runs the pipeline on a fresh checkout, with and without loading into PostgreSQL (twice, to check
+that a repeated load gives the same row count).
