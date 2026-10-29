@@ -1,3 +1,4 @@
+import argparse
 import random
 from pathlib import Path
 
@@ -18,7 +19,7 @@ RAW_DIR = Path("data/raw")
 PROCESSED_DIR = Path("data/processed")
 
 
-def main():
+def main(load_postgres: bool = False):
     random.seed(SEED)
     np.random.seed(SEED)
     RAW_DIR.mkdir(parents=True, exist_ok=True)
@@ -44,6 +45,21 @@ def main():
     top.to_csv("data/processed/top_performers.csv", index=False)
     print("Done. Results saved to data/processed/")
 
+    if load_postgres:
+        import psycopg
+
+        from src.load.postgres_loader import get_database_url, load_results
+
+        with psycopg.connect(get_database_url()) as conn:
+            load_results(conn, df, top)
+        print(f"Loaded {len(df)} rows into sales_analysis and {len(top)} into top_performers")
+
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Retail sales and inventory pipeline")
+    parser.add_argument(
+        "--load-postgres",
+        action="store_true",
+        help="also load the results into PostgreSQL (DATABASE_URL)",
+    )
+    main(load_postgres=parser.parse_args().load_postgres)
