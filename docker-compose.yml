@@ -1,0 +1,21 @@
+# Local PostgreSQL for `python -m src.main --load-postgres` and the database tests.
+# Throwaway development credentials; port 5435 avoids clashing with other local databases.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: retail
+      POSTGRES_PASSWORD: retail
+      POSTGRES_DB: retail
+    ports:
+      - "127.0.0.1:5435:5432"
+    volumes:
+      - retail_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U retail -d retail"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  retail_pgdata:
